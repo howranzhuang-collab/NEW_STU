@@ -42,3 +42,10 @@ build/
 *.db
 *.sqlite
 
+### Uploads ###
+uploads/
+
+### Environment ###
+.env
+.env.local
+
