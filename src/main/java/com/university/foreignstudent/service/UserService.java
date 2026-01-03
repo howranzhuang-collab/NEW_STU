@@ -78,34 +78,43 @@ public class UserService {
     public Map<String, Object> login(String username, String password) {
         log.info("用户尝试登录: {}", username);
         
-        // 查询用户
-        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(User::getUsername, username);
-        queryWrapper.eq(User::getDeleted, 0);
-        User user = userMapper.selectOne(queryWrapper);
-        
-        if (user == null) {
-            log.warn("用户不存在: {}", username);
-            throw new RuntimeException("用户名或密码错误");
+        try {
+            // 查询用户
+            LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(User::getUsername, username);
+            queryWrapper.eq(User::getDeleted, 0);
+            User user = userMapper.selectOne(queryWrapper);
+            
+            if (user == null) {
+                log.warn("用户不存在: {}", username);
+                throw new RuntimeException("用户名或密码错误");
+            }
+            
+            // 验证密码
+            if (!passwordEncoder.matches(password, user.getPassword())) {
+                log.warn("密码错误: {}", username);
+                throw new RuntimeException("用户名或密码错误");
+            }
+            
+            // 生成 JWT token
+            String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
+            log.info("用户登录成功: {}", username);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "登录成功");
+            result.put("token", token);
+            result.put("username", user.getUsername());
+            result.put("role", user.getRole());
+            return result;
+        } catch (RuntimeException e) {
+            // 重新抛出 RuntimeException，让上层处理
+            throw e;
+        } catch (Exception e) {
+            // 捕获其他异常，包装为 RuntimeException
+            log.error("登录过程中发生异常: {}", username, e);
+            throw new RuntimeException("登录失败: " + e.getMessage(), e);
         }
-        
-        // 验证密码
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            log.warn("密码错误: {}", username);
-            throw new RuntimeException("用户名或密码错误");
-        }
-        
-        // 生成 JWT token
-        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
-        log.info("用户登录成功: {}", username);
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("message", "登录成功");
-        result.put("token", token);
-        result.put("username", user.getUsername());
-        result.put("role", user.getRole());
-        return result;
     }
     
     /**

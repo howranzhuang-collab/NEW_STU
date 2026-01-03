@@ -59,25 +59,36 @@ public class AuthController {
      */
     @PostMapping("/login")
     public Result<Map<String, Object>> login(@RequestBody Map<String, String> request) {
+        log.info("=== 登录请求开始 ===");
+        log.info("请求参数: {}", request);
         try {
-            String username = request.get("username");
-            String password = request.get("password");
+            String username = request != null ? request.get("username") : null;
+            String password = request != null ? request.get("password") : null;
+            
+            log.info("提取参数: username={}, password={}", username, password != null ? "***" : null);
             
             if (username == null || username.trim().isEmpty()) {
+                log.warn("用户名为空");
                 return Result.error("用户名不能为空");
             }
             if (password == null || password.trim().isEmpty()) {
+                log.warn("密码为空");
                 return Result.error("密码不能为空");
             }
             
+            log.info("开始调用 UserService.login: username={}", username);
             Map<String, Object> result = userService.login(username, password);
+            log.info("UserService.login 调用成功");
+            log.info("=== 登录请求成功 ===");
             return Result.success("登录成功", result);
         } catch (RuntimeException e) {
-            log.error("登录失败", e);
+            log.error("登录失败 (RuntimeException): {}", e.getMessage(), e);
+            log.error("异常堆栈:", e);
             return Result.error(e.getMessage());
         } catch (Exception e) {
-            log.error("登录异常", e);
-            return Result.error("登录失败，请稍后重试");
+            log.error("登录异常 (Exception): 类型={}, 消息={}", e.getClass().getName(), e.getMessage(), e);
+            log.error("完整异常堆栈:", e);
+            return Result.error("登录失败，请稍后重试: " + e.getClass().getSimpleName() + " - " + e.getMessage());
         }
     }
 }

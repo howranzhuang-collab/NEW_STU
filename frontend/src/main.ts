@@ -9,7 +9,8 @@ import App from './App.vue'
 const app = createApp(App)
 
 // 临时验证：检查环境变量
-console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL)
+console.log('所有环境变量:', import.meta.env)
+console.log('当前 VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL)
 
 app.use(ElementPlus)
 app.use(createPinia())
